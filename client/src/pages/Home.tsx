@@ -590,13 +590,19 @@ export default function Home() {
           </div>
 
           <div className="overflow-x-auto fade-up stagger-1">
-            <table className="w-full bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden">
+            <table className="w-full bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden table-fixed">
+              <colgroup>
+                <col style={{ width: "22%" }} />
+                <col style={{ width: "26%" }} />
+                <col style={{ width: "26%" }} />
+                <col style={{ width: "26%" }} />
+              </colgroup>
               <thead>
                 <tr style={{ background: "#0F1F4B" }}>
                   <th className="text-left px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">Dimension</th>
                   <th className="text-center px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">Generic global KYB</th>
                   <th className="text-center px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">DIY (build it yourself)</th>
-                  <th className="text-center px-5 py-4 text-xs font-bold text-[#2DD4BF] uppercase tracking-wide">V-Safe ✓</th>
+                  <th className="text-right px-5 py-4 text-xs font-bold text-[#2DD4BF] uppercase tracking-wide">V-Safe ✓</th>
                 </tr>
               </thead>
               <tbody>
@@ -610,10 +616,10 @@ export default function Home() {
                   ["Time to first result", "Procurement + integration weeks", "Weeks of engineering", "One API call"],
                 ].map(([dim, generic, diy, vsafe], i) => (
                   <tr key={dim} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
-                    <td className="px-5 py-3.5 text-sm font-medium text-gray-800">{dim}</td>
-                    <td className="px-5 py-3.5 text-sm text-gray-500 text-center">{generic}</td>
-                    <td className="px-5 py-3.5 text-sm text-gray-500 text-center">{diy}</td>
-                    <td className="px-5 py-3.5 text-sm font-medium text-[#0D9488] text-center">✅ {vsafe}</td>
+                    <td className="px-5 py-3.5 text-sm font-medium text-gray-800 align-top">{dim}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500 text-center align-top">{generic}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500 text-center align-top">{diy}</td>
+                    <td className="px-5 py-3.5 text-sm font-semibold text-[#0D9488] text-right align-top">✅ {vsafe}</td>
                   </tr>
                 ))}
               </tbody>

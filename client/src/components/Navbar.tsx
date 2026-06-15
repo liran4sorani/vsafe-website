@@ -1,13 +1,11 @@
 /* V-Safe Navbar — Clean Signal design system
  * Transparent on hero, transitions to white/blur on scroll
  * Navy primary, teal accent
+ * Logo: inline SVG — works on dark hero AND white scrolled nav
  */
 import { useState, useEffect } from "react";
 import { Link, useLocation } from "wouter";
 import { Menu, X } from "lucide-react";
-
-const LOGO_DARK = "/manus-storage/vsafe-logo-dark_e44422cd.png";
-const LOGO_PRIMARY = "/manus-storage/vsafe-logo-primary_510e0c45.png";
 
 const navLinks = [
   { label: "Product", href: "/" },
@@ -16,6 +14,54 @@ const navLinks = [
   { label: "Docs", href: "/docs" },
   { label: "About", href: "/about" },
 ];
+
+/** Inline SVG logo — shield + V mark + risk gauge arc + wordmark
+ *  wordmarkColor adapts to background so it's always legible
+ */
+function VSafeLogo({ isDark }: { isDark: boolean }) {
+  const wordmark = isDark ? "#FFFFFF" : "#0F1F4B";
+  return (
+    <svg
+      viewBox="0 0 220 52"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      className="h-11 w-auto"
+      aria-label="V-Safe"
+    >
+      {/* ── Shield body ── */}
+      <path
+        d="M26 4 L46 10 L46 28 C46 38 36 46 26 49 C16 46 6 38 6 28 L6 10 Z"
+        fill="#0F1F4B"
+      />
+      {/* ── V mark in teal ── */}
+      <path
+        d="M14 14 L26 36 L38 14"
+        stroke="#2DD4BF"
+        strokeWidth="5"
+        strokeLinecap="round"
+        strokeLinejoin="round"
+        fill="none"
+      />
+      {/* ── Risk gauge arc (green → amber → red) ── */}
+      <path d="M13 43 Q26 38 39 43" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M22 45.5 Q26 43 30 45.5" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M30 45.5 Q34 43 39 43" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" fill="none" />
+
+      {/* ── Wordmark ── */}
+      <text
+        x="56"
+        y="34"
+        fontFamily="'Space Grotesk', 'Inter', system-ui, sans-serif"
+        fontWeight="700"
+        fontSize="22"
+        fill={wordmark}
+        letterSpacing="-0.5"
+      >
+        V-Safe
+      </text>
+    </svg>
+  );
+}
 
 export default function Navbar() {
   const [scrolled, setScrolled] = useState(false);
@@ -43,12 +89,8 @@ export default function Navbar() {
       <div className="container">
         <div className="flex items-center justify-between h-16 md:h-18">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-2 shrink-0">
-            <img
-              src={isDark ? LOGO_DARK : LOGO_PRIMARY}
-              alt="V-Safe"
-              className="h-9 w-auto object-contain"
-            />
+          <Link href="/" className="flex items-center shrink-0">
+            <VSafeLogo isDark={isDark} />
           </Link>
 
           {/* Desktop nav */}
