@@ -1,27 +1,14 @@
 import express, { type Express } from "express";
 import fs from "fs";
 import { type Server } from "http";
-import { nanoid } from "nanoid";
 import path from "path";
-import { fileURLToPath } from "url";
-import { createServer as createViteServer } from "vite";
-import viteConfig from "../../vite.config";
-
-// Safe __dirname that works in both ESM and bundled production builds
-function getDirname(): string {
-  try {
-    if (import.meta.url) {
-      return path.dirname(fileURLToPath(import.meta.url));
-    }
-  } catch {
-    // fallback
-  }
-  return process.cwd();
-}
-
-const __dirname = getDirname();
 
 export async function setupVite(app: Express, server: Server) {
+  // Dynamic imports so vite.config is NEVER bundled into the production server
+  const { nanoid } = await import("nanoid");
+  const { createServer: createViteServer } = await import("vite");
+  const { default: viteConfig } = await import("../../vite.config");
+
   const serverOptions = {
     middlewareMode: true,
     hmr: { server },
@@ -41,8 +28,7 @@ export async function setupVite(app: Express, server: Server) {
 
     try {
       const clientTemplate = path.resolve(
-        __dirname,
-        "../..",
+        process.cwd(),
         "client",
         "index.html"
       );
@@ -63,7 +49,7 @@ export async function setupVite(app: Express, server: Server) {
 }
 
 export function serveStatic(app: Express) {
-  // In production, the bundle is at dist/index.js and static files are at dist/public
+  // In production, static files are at dist/public relative to cwd (/app)
   const distPath = path.resolve(process.cwd(), "dist", "public");
 
   if (!fs.existsSync(distPath)) {
