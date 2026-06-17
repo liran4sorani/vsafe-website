@@ -600,9 +600,9 @@ export default function Home() {
               <thead>
                 <tr style={{ background: "#0F1F4B" }}>
                   <th className="text-left px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">Dimension</th>
-                  <th className="text-center px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">Generic global KYB</th>
-                  <th className="text-center px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">DIY (build it yourself)</th>
-                  <th className="text-right px-5 py-4 text-xs font-bold text-[#2DD4BF] uppercase tracking-wide">V-Safe ✓</th>
+                  <th className="text-left px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">Generic global KYB</th>
+                  <th className="text-left px-5 py-4 text-xs font-bold text-white/60 uppercase tracking-wide">DIY (build it yourself)</th>
+                  <th className="text-left px-5 py-4 text-xs font-bold text-[#2DD4BF] uppercase tracking-wide">V-Safe ✓</th>
                 </tr>
               </thead>
               <tbody>
@@ -617,9 +617,9 @@ export default function Home() {
                 ].map(([dim, generic, diy, vsafe], i) => (
                   <tr key={dim} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
                     <td className="px-5 py-3.5 text-sm font-medium text-gray-800 align-top">{dim}</td>
-                    <td className="px-5 py-3.5 text-sm text-gray-500 text-center align-top">{generic}</td>
-                    <td className="px-5 py-3.5 text-sm text-gray-500 text-center align-top">{diy}</td>
-                    <td className="px-5 py-3.5 text-sm font-semibold text-[#0D9488] text-right align-top">✅ {vsafe}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500 text-left align-top">{generic}</td>
+                    <td className="px-5 py-3.5 text-sm text-gray-500 text-left align-top">{diy}</td>
+                    <td className="px-5 py-3.5 text-sm font-semibold text-[#0D9488] text-left align-top">✅ {vsafe}</td>
                   </tr>
                 ))}
               </tbody>
