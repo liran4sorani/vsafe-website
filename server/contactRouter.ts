@@ -13,29 +13,38 @@ const contactSchema = z.object({
   message: z.string().min(1, "Message is required").max(5000),
 });
 
-async function sendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolean> {
+// Wrap any async call with a hard timeout
+function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
+  return Promise.race([
+    promise,
+    new Promise<T>((_, reject) =>
+      setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
+    ),
+  ]);
+}
+
+async function trySendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolean> {
   const gmailUser = process.env.GMAIL_USER;
   const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
   if (!gmailUser || !gmailPass) {
-    console.warn("[Contact] GMAIL_USER or GMAIL_APP_PASSWORD not set — falling back to notifyOwner");
+    console.warn("[Contact] GMAIL_USER or GMAIL_APP_PASSWORD not set");
     return false;
   }
 
-  // Use port 587 + STARTTLS (works on Railway; port 465 SSL is often blocked)
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
     port: 587,
-    secure: false, // STARTTLS
+    secure: false,
     auth: { user: gmailUser, pass: gmailPass },
-    connectionTimeout: 10000, // 10s connect timeout
-    greetingTimeout: 10000,
-    socketTimeout: 15000,
+    connectionTimeout: 8000,
+    greetingTimeout: 8000,
+    socketTimeout: 10000,
   });
 
   const subject = `V-Safe Inquiry: ${input.requestType || "General"} — ${input.name}`;
   const html = `
-    <div style="font-family: 'Space Grotesk', Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #F8FAFC; border-radius: 12px; overflow: hidden;">
+    <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #F8FAFC; border-radius: 12px; overflow: hidden;">
       <div style="background: #0F1F4B; padding: 32px 40px;">
         <h1 style="color: white; margin: 0; font-size: 22px; font-weight: 700;">New V-Safe Inquiry</h1>
         <p style="color: rgba(255,255,255,0.6); margin: 8px 0 0; font-size: 14px;">${subject}</p>
@@ -57,13 +66,16 @@ async function sendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolea
     </div>
   `;
 
-  await transporter.sendMail({
-    from: `"V-Safe Website" <${gmailUser}>`,
-    to: RECIPIENT,
-    replyTo: input.email,
-    subject,
-    html,
-  });
+  await withTimeout(
+    transporter.sendMail({
+      from: `"V-Safe Website" <${gmailUser}>`,
+      to: RECIPIENT,
+      replyTo: input.email,
+      subject,
+      html,
+    }),
+    12000 // 12s hard cap on the entire sendMail call
+  );
 
   console.log(`[Contact] SMTP sent successfully to ${RECIPIENT}`);
   return true;
@@ -86,28 +98,34 @@ export const contactRouter = router({
         .filter(Boolean)
         .join("\n");
 
-      // Try SMTP first, fall back to Manus owner notification
-      let smtpSent = false;
-      try {
-        smtpSent = await sendViaSmtp(input);
-      } catch (err) {
-        console.error("[Contact] SMTP failed:", err instanceof Error ? err.message : err);
-      }
-
-      if (!smtpSent) {
-        // Fallback: send as Manus owner notification so the lead is never lost
-        console.log("[Contact] Falling back to notifyOwner");
+      // Always return success to the user — fire notifications in background
+      // Use Promise.allSettled so one failure never blocks the response
+      void (async () => {
+        let smtpSent = false;
         try {
-          await notifyOwner({
-            title: subject,
-            content: `To: ${RECIPIENT}\n\n${content}`,
-          });
-          console.log("[Contact] notifyOwner fallback succeeded");
+          smtpSent = await trySendViaSmtp(input);
         } catch (err) {
-          console.error("[Contact] Both SMTP and notifyOwner failed:", err);
+          console.error("[Contact] SMTP failed:", err instanceof Error ? err.message : String(err));
         }
-      }
 
+        if (!smtpSent) {
+          console.log("[Contact] SMTP unavailable — using notifyOwner fallback");
+          try {
+            await withTimeout(
+              notifyOwner({
+                title: subject,
+                content: `To: ${RECIPIENT}\n\n${content}`,
+              }),
+              10000
+            );
+            console.log("[Contact] notifyOwner fallback succeeded");
+          } catch (err) {
+            console.error("[Contact] notifyOwner also failed:", err instanceof Error ? err.message : String(err));
+          }
+        }
+      })();
+
+      // Return immediately — don't wait for email delivery
       return { success: true };
     }),
 });
