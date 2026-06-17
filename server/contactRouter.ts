@@ -22,11 +22,15 @@ async function sendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolea
     return false;
   }
 
+  // Use port 587 + STARTTLS (works on Railway; port 465 SSL is often blocked)
   const transporter = nodemailer.createTransport({
     host: "smtp.gmail.com",
-    port: 465,
-    secure: true,
+    port: 587,
+    secure: false, // STARTTLS
     auth: { user: gmailUser, pass: gmailPass },
+    connectionTimeout: 10000, // 10s connect timeout
+    greetingTimeout: 10000,
+    socketTimeout: 15000,
   });
 
   const subject = `V-Safe Inquiry: ${input.requestType || "General"} — ${input.name}`;
@@ -61,6 +65,7 @@ async function sendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolea
     html,
   });
 
+  console.log(`[Contact] SMTP sent successfully to ${RECIPIENT}`);
   return true;
 }
 
@@ -82,16 +87,25 @@ export const contactRouter = router({
         .join("\n");
 
       // Try SMTP first, fall back to Manus owner notification
-      const smtpSent = await sendViaSmtp(input).catch(() => false);
+      let smtpSent = false;
+      try {
+        smtpSent = await sendViaSmtp(input);
+      } catch (err) {
+        console.error("[Contact] SMTP failed:", err instanceof Error ? err.message : err);
+      }
 
       if (!smtpSent) {
         // Fallback: send as Manus owner notification so the lead is never lost
-        await notifyOwner({
-          title: subject,
-          content: `To: ${RECIPIENT}\n\n${content}`,
-        }).catch((err) => {
+        console.log("[Contact] Falling back to notifyOwner");
+        try {
+          await notifyOwner({
+            title: subject,
+            content: `To: ${RECIPIENT}\n\n${content}`,
+          });
+          console.log("[Contact] notifyOwner fallback succeeded");
+        } catch (err) {
           console.error("[Contact] Both SMTP and notifyOwner failed:", err);
-        });
+        }
       }
 
       return { success: true };
