@@ -316,7 +316,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-8">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-xs font-semibold text-white/80" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  8 signal layers · hundreds of data sources · live primary data
+                  8 signal layers · 500+ data sources · live primary data
                 </span>
               </div>
 
@@ -348,7 +348,7 @@ export default function Home() {
               <div className="flex flex-wrap gap-6">
                 {[
                   { value: "8", label: "Signal layers" },
-                  { value: "19", label: "Data sources" },
+                  { value: "500+", label: "Data sources" },
                   { value: "0–100", label: "Normalized score" },
                   { value: "MCP", label: "Agent-native" },
                 ].map((stat) => (
@@ -506,7 +506,7 @@ export default function Home() {
           <div className="mt-10 flex flex-wrap justify-center gap-8 py-6 bg-white rounded-xl border border-gray-100">
             {[
               { value: "8", label: "Signal layers" },
-              { value: "100s", label: "Underlying data sources" },
+              { value: "500+", label: "Underlying data sources" },
               { value: "Live", label: "Primary source queries" },
               { value: "Hebrew", label: "Native language support" },
             ].map((stat) => (

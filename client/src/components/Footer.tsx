@@ -126,7 +126,7 @@ export default function Footer() {
             © {new Date().getFullYear()} V-Safe. All rights reserved. V-Safe provides decision-support intelligence, not legal or regulatory advice.
           </p>
           <p className="text-xs text-white/30">
-            8 signal layers · 19 data sources · live primary data
+            8 signal layers · 500+ data sources · live primary data
           </p>
         </div>
       </div>
