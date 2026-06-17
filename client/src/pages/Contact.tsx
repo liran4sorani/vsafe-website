@@ -1,19 +1,34 @@
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
 import { useState } from "react";
-import { Mail, Calendar, ArrowRight, Check } from "lucide-react";
+import { Mail, Calendar, ArrowRight, Check, Loader2 } from "lucide-react";
+import { trpc } from "@/lib/trpc";
 
 export default function Contact() {
   const [submitted, setSubmitted] = useState(false);
   const [form, setForm] = useState({ name: "", email: "", company: "", message: "", type: "demo" });
+  const [error, setError] = useState<string | null>(null);
+
+  const submitMutation = trpc.contact.submit.useMutation({
+    onSuccess: () => {
+      setSubmitted(true);
+      setError(null);
+    },
+    onError: (err) => {
+      setError(err.message || "Something went wrong. Please email us directly at liran@socalytix.io");
+    },
+  });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Build mailto link with form data
-    const subject = encodeURIComponent(`V-Safe Inquiry: ${form.type === 'demo' ? 'Book a Demo' : form.type === 'api' ? 'Get API Key' : form.type === 'enterprise' ? 'Enterprise Pricing' : form.type === 'technical' ? 'Technical Question' : 'General Inquiry'}`);
-    const body = encodeURIComponent(`Name: ${form.name}\nCompany: ${form.company}\nEmail: ${form.email}\n\nMessage:\n${form.message}`);
-    window.location.href = `mailto:sales@socalytix.io?subject=${subject}&body=${body}`;
-    setSubmitted(true);
+    setError(null);
+    submitMutation.mutate({
+      name: form.name,
+      email: form.email,
+      company: form.company || undefined,
+      message: form.message || "No message provided.",
+      requestType: form.type,
+    });
   };
 
   return (
@@ -49,7 +64,7 @@ export default function Contact() {
                   <div>
                     <h3 className="font-semibold text-[#0F1F4B] mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Get in touch</h3>
                     <p className="text-sm text-gray-600">Questions about pricing, enterprise plans, or technical integration? Send us a message.</p>
-                    <a href="mailto:sales@socalytix.io" className="inline-block mt-2 text-sm font-semibold text-[#0D9488] hover:underline">sales@socalytix.io</a>
+                    <a href="mailto:liran@socalytix.io" className="inline-block mt-2 text-sm font-semibold text-[#0D9488] hover:underline">liran@socalytix.io</a>
                   </div>
                 </div>
               </div>
@@ -99,8 +114,28 @@ export default function Contact() {
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">Message</label>
                     <textarea value={form.message} onChange={(e) => setForm({ ...form, message: e.target.value })} rows={4} placeholder="Tell us about your use case..." className="w-full border border-gray-200 rounded-lg px-3 py-2.5 text-sm focus:outline-none focus:ring-2 focus:ring-[#0D9488]/30 focus:border-[#0D9488] resize-none" />
                   </div>
-                  <button type="submit" className="btn-primary w-full justify-center">
-                    Send message <ArrowRight size={16} />
+
+                  {error && (
+                    <div className="bg-red-50 border border-red-100 rounded-lg px-4 py-3 text-sm text-red-600">
+                      {error}
+                    </div>
+                  )}
+
+                  <button
+                    type="submit"
+                    disabled={submitMutation.isPending}
+                    className="btn-primary w-full justify-center disabled:opacity-60 disabled:cursor-not-allowed"
+                  >
+                    {submitMutation.isPending ? (
+                      <>
+                        <Loader2 size={16} className="animate-spin" />
+                        Sending…
+                      </>
+                    ) : (
+                      <>
+                        Send message <ArrowRight size={16} />
+                      </>
+                    )}
                   </button>
                   <p className="text-xs text-gray-400 text-center">
                     V-Safe provides decision-support intelligence, not legal advice. We screen companies, not individuals.

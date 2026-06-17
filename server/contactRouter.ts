@@ -3,7 +3,7 @@ import { z } from "zod";
 import { notifyOwner } from "./_core/notification";
 import { publicProcedure, router } from "./_core/trpc";
 
-const RECIPIENT = "sales@socalytix.io";
+const RECIPIENT = "liran@socalytix.io";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -14,20 +14,19 @@ const contactSchema = z.object({
 });
 
 async function sendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolean> {
-  const smtpHost = process.env.SMTP_HOST;
-  const smtpUser = process.env.SMTP_USER;
-  const smtpPass = process.env.SMTP_PASS;
-  const smtpPort = parseInt(process.env.SMTP_PORT || "587", 10);
+  const gmailUser = process.env.GMAIL_USER;
+  const gmailPass = process.env.GMAIL_APP_PASSWORD;
 
-  if (!smtpHost || !smtpUser || !smtpPass) {
+  if (!gmailUser || !gmailPass) {
+    console.warn("[Contact] GMAIL_USER or GMAIL_APP_PASSWORD not set — falling back to notifyOwner");
     return false;
   }
 
   const transporter = nodemailer.createTransport({
-    host: smtpHost,
-    port: smtpPort,
-    secure: smtpPort === 465,
-    auth: { user: smtpUser, pass: smtpPass },
+    host: "smtp.gmail.com",
+    port: 465,
+    secure: true,
+    auth: { user: gmailUser, pass: gmailPass },
   });
 
   const subject = `V-Safe Inquiry: ${input.requestType || "General"} — ${input.name}`;
@@ -55,7 +54,7 @@ async function sendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolea
   `;
 
   await transporter.sendMail({
-    from: `"V-Safe Website" <${smtpUser}>`,
+    from: `"V-Safe Website" <${gmailUser}>`,
     to: RECIPIENT,
     replyTo: input.email,
     subject,
