@@ -655,15 +655,26 @@ export default function Home() {
                 A risk tool your AI agent can call directly.
               </h2>
               <p className="text-white/70 leading-relaxed mb-6 fade-up stagger-1">
-                V-Safe is exposed as an MCP tool for LLMs and AI agents. Drop it into your agent and it just works — no scraping, no glue code, no custom parsing. The output is schema-strict and standards-aligned so your agent can reason over the structured result immediately.
+                V-Safe is live on MCP at <span className="text-[#2DD4BF] font-mono text-sm">mcp.v-safe.ai</span> — secured by Cloudflare TLS, bearer-auth, and quota metering. Drop it into Claude Desktop, Cursor, LangChain, or CrewAI and your agent gets two tools: <span className="text-[#2DD4BF] font-semibold">check_israeli_company</span> (all 8 layers) and <span className="text-[#2DD4BF] font-semibold">quick_check</span> (fast pre-screen). No scraping, no glue code, no custom parsing.
               </p>
+
+              {/* Live endpoint box */}
+              <div className="bg-white/5 border border-white/10 rounded-xl p-4 mb-6 fade-up stagger-1">
+                <p className="text-xs text-white/40 uppercase tracking-wide mb-2 font-semibold">Live MCP endpoint</p>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className="w-2 h-2 rounded-full bg-green-400 animate-pulse shrink-0" />
+                  <code className="text-[#2DD4BF] text-sm font-mono">https://mcp.v-safe.ai/mcp</code>
+                </div>
+                <p className="text-xs text-white/40 mt-2">Authorization: Bearer &lt;token&gt; · JSON-RPC 2.0 over HTTP POST · SSE responses</p>
+              </div>
+
               <ul className="space-y-3 mb-8">
                 {[
-                  "Schema-strict JSON output — no parsing required",
-                  "MCP-native tool exposure for LLM agents",
-                  "Standards-aligned (FollowTheMoney entity model)",
-                  "Hebrew and English adverse media, AI-scored",
-                  "Graceful degradation — missing sources never break the call",
+                  "Works in Claude Desktop, Cursor, LangChain, CrewAI",
+                  "Two tools: check_israeli_company + quick_check",
+                  "Bearer-auth + per-tenant quota metering",
+                  "Hebrew company names from live primary sources",
+                  "Schema-strict JSON — agent reasons over result immediately",
                 ].map((item) => (
                   <li key={item} className="flex items-start gap-2.5 text-sm text-white/70 fade-up stagger-1">
                     <CheckCircle2 size={16} className="text-[#2DD4BF] mt-0.5 shrink-0" />
@@ -671,30 +682,57 @@ export default function Home() {
                   </li>
                 ))}
               </ul>
-              <Link href="/docs" className="btn-teal">
-                Read the MCP docs <ArrowRight size={16} />
-              </Link>
+              <div className="flex flex-wrap gap-3">
+                <Link href="/docs" className="btn-teal">
+                  MCP docs &amp; setup <ArrowRight size={16} />
+                </Link>
+                <a href="mailto:sales@socalytix.io?subject=V-Safe MCP Token Request" className="btn-outline-white text-sm">
+                  Request a token
+                </a>
+              </div>
             </div>
 
-            <div className="fade-up stagger-2">
+            <div className="fade-up stagger-2 space-y-4">
+              {/* Step 1 */}
+              <div className="text-xs text-white/40 uppercase tracking-wide font-semibold mb-1">① No token → 401 (auth enforced)</div>
               <CodeBlock
-                language="python — MCP agent example"
-                code={`# Drop V-Safe into your LangChain / CrewAI agent
-from vsafe_mcp import VSafeTool
-
-agent = Agent(
-    tools=[VSafeTool(api_key="...")],
-    instructions="Check Israeli companies before onboarding."
-)
-
-result = agent.run(
-    "Is registration number 512345678 safe to onboard?"
-)
-
-# Agent receives structured JSON:
-# risk_score.band = "HIGH"
-# risk_score.drivers = ["insolvency proceedings"]
-# → Agent responds: "Do not onboard — HIGH risk."`}
+                language="HTTP"
+                code={`POST https://mcp.v-safe.ai/mcp
+{"jsonrpc":"2.0","id":1,"method":"initialize","params":{}}
+← 401  {"error":"missing or invalid bearer token"}`}
+              />
+              {/* Step 2 */}
+              <div className="text-xs text-white/40 uppercase tracking-wide font-semibold">② initialize with Bearer token → handshake</div>
+              <CodeBlock
+                language="HTTP"
+                code={`POST https://mcp.v-safe.ai/mcp
+Authorization: Bearer <jwt>
+{"jsonrpc":"2.0","id":1,"method":"initialize",
+ "params":{"protocolVersion":"2024-11-05",
+           "clientInfo":{"name":"demo"},"capabilities":{}}}
+← 200  {"result":{"serverInfo":{"name":"vsafe-risk","version":"1.27.2"},
+         "capabilities":{"tools":{"listChanged":false}}}}`}
+              />
+              {/* Step 3 */}
+              <div className="text-xs text-white/40 uppercase tracking-wide font-semibold">③ tools/list → two advertised tools</div>
+              <CodeBlock
+                language="JSON-RPC"
+                code={`{"jsonrpc":"2.0","id":2,"method":"tools/list"}
+← check_israeli_company  — full 8-layer risk assessment
+← quick_check            — fast pre-screen (registry + insolvency + banking + domain)`}
+              />
+              {/* Step 4 */}
+              <div className="text-xs text-white/40 uppercase tracking-wide font-semibold">④ tools/call → live result (Teva, real data)</div>
+              <CodeBlock
+                language="JSON-RPC"
+                code={`{"jsonrpc":"2.0","id":3,"method":"tools/call",
+ "params":{"name":"quick_check",
+           "arguments":{"registration_number":"520013954"}}}
+← caption   : תעשיות פרמצבטיות טבע בע"מ  (Teva Pharmaceutical)
+← band      : LOW   score: 0.0
+← confidence: 0.82   coverage: 0.82
+← layers    : registry ✅  insolvency ✅  boi_restricted ✅
+← usage     : { plan: "trial", day: "3/50", month: "3/500" }`}
               />
             </div>
           </div>
