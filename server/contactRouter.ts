@@ -1,9 +1,9 @@
-import nodemailer from "nodemailer";
+import { Resend } from "resend";
 import { z } from "zod";
 import { notifyOwner } from "./_core/notification";
 import { publicProcedure, router } from "./_core/trpc";
 
-const RECIPIENT = "liran@socalytix.io";
+const RECIPIENT = "sales@socalytix.io";
 
 const contactSchema = z.object({
   name: z.string().min(1, "Name is required").max(200),
@@ -13,36 +13,16 @@ const contactSchema = z.object({
   message: z.string().min(1, "Message is required").max(5000),
 });
 
-// Wrap any async call with a hard timeout
-function withTimeout<T>(promise: Promise<T>, ms: number): Promise<T> {
-  return Promise.race([
-    promise,
-    new Promise<T>((_, reject) =>
-      setTimeout(() => reject(new Error(`Timed out after ${ms}ms`)), ms)
-    ),
-  ]);
-}
-
-async function trySendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boolean> {
-  const gmailUser = process.env.GMAIL_USER;
-  const gmailPass = process.env.GMAIL_APP_PASSWORD;
-
-  if (!gmailUser || !gmailPass) {
-    console.warn("[Contact] GMAIL_USER or GMAIL_APP_PASSWORD not set");
+async function trySendViaResend(input: z.infer<typeof contactSchema>): Promise<boolean> {
+  const apiKey = process.env.RESEND_API_KEY;
+  if (!apiKey) {
+    console.warn("[Contact] RESEND_API_KEY not set");
     return false;
   }
 
-  const transporter = nodemailer.createTransport({
-    host: "smtp.gmail.com",
-    port: 587,
-    secure: false,
-    auth: { user: gmailUser, pass: gmailPass },
-    connectionTimeout: 8000,
-    greetingTimeout: 8000,
-    socketTimeout: 10000,
-  });
-
+  const resend = new Resend(apiKey);
   const subject = `V-Safe Inquiry: ${input.requestType || "General"} — ${input.name}`;
+
   const html = `
     <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; background: #F8FAFC; border-radius: 12px; overflow: hidden;">
       <div style="background: #0F1F4B; padding: 32px 40px;">
@@ -66,18 +46,20 @@ async function trySendViaSmtp(input: z.infer<typeof contactSchema>): Promise<boo
     </div>
   `;
 
-  await withTimeout(
-    transporter.sendMail({
-      from: `"V-Safe Website" <${gmailUser}>`,
-      to: RECIPIENT,
-      replyTo: input.email,
-      subject,
-      html,
-    }),
-    12000 // 12s hard cap on the entire sendMail call
-  );
+  const { error } = await resend.emails.send({
+    from: "V-Safe Website <noreply@v-safe.ai>",
+    to: RECIPIENT,
+    replyTo: input.email,
+    subject,
+    html,
+  });
 
-  console.log(`[Contact] SMTP sent successfully to ${RECIPIENT}`);
+  if (error) {
+    console.error("[Contact] Resend error:", error);
+    return false;
+  }
+
+  console.log(`[Contact] Resend sent successfully to ${RECIPIENT}`);
   return true;
 }
 
@@ -98,34 +80,29 @@ export const contactRouter = router({
         .filter(Boolean)
         .join("\n");
 
-      // Always return success to the user — fire notifications in background
-      // Use Promise.allSettled so one failure never blocks the response
+      // Fire email in background — always return success immediately to the user
       void (async () => {
-        let smtpSent = false;
+        let sent = false;
         try {
-          smtpSent = await trySendViaSmtp(input);
+          sent = await trySendViaResend(input);
         } catch (err) {
-          console.error("[Contact] SMTP failed:", err instanceof Error ? err.message : String(err));
+          console.error("[Contact] Resend threw:", err instanceof Error ? err.message : String(err));
         }
 
-        if (!smtpSent) {
-          console.log("[Contact] SMTP unavailable — using notifyOwner fallback");
+        if (!sent) {
+          console.log("[Contact] Resend unavailable — using notifyOwner fallback");
           try {
-            await withTimeout(
-              notifyOwner({
-                title: subject,
-                content: `To: ${RECIPIENT}\n\n${content}`,
-              }),
-              10000
-            );
+            await notifyOwner({
+              title: subject,
+              content: `To: ${RECIPIENT}\n\n${content}`,
+            });
             console.log("[Contact] notifyOwner fallback succeeded");
           } catch (err) {
-            console.error("[Contact] notifyOwner also failed:", err instanceof Error ? err.message : String(err));
+            console.error("[Contact] Both Resend and notifyOwner failed:", err instanceof Error ? err.message : String(err));
           }
         }
       })();
 
-      // Return immediately — don't wait for email delivery
       return { success: true };
     }),
 });
