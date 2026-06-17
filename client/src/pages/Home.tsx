@@ -316,7 +316,7 @@ export default function Home() {
               <div className="inline-flex items-center gap-2 bg-white/10 border border-white/20 rounded-full px-4 py-1.5 mb-8">
                 <div className="w-1.5 h-1.5 rounded-full bg-green-400 animate-pulse" />
                 <span className="text-xs font-semibold text-white/80" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  8 signal layers · 19 data sources · live primary data
+                  8 signal layers · hundreds of data sources · live primary data
                 </span>
               </div>
 
@@ -506,7 +506,7 @@ export default function Home() {
           <div className="mt-10 flex flex-wrap justify-center gap-8 py-6 bg-white rounded-xl border border-gray-100">
             {[
               { value: "8", label: "Signal layers" },
-              { value: "19", label: "Underlying data sources" },
+              { value: "100s", label: "Underlying data sources" },
               { value: "Live", label: "Primary source queries" },
               { value: "Hebrew", label: "Native language support" },
             ].map((stat) => (
@@ -742,13 +742,13 @@ Authorization: Bearer <jwt>
       {/* ── TIERS ─────────────────────────────────────────────────────────── */}
       <Section className="py-20 bg-[#F8FAFC]" id="pricing">
         <div className="container">
-          <div className="max-w-2xl mx-auto text-center mb-14">
+              <div className="max-w-2xl mx-auto text-center mb-14">
             <p className="section-label mb-3">Tiers</p>
             <h2 className="text-3xl md:text-4xl font-bold text-[#0F1F4B] mb-4 fade-up" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
               Two tiers. Same structured output.
             </h2>
             <p className="text-base text-gray-600 fade-up stagger-1">
-              Choose the depth you need. Both tiers return the same clean JSON schema.
+              Choose the depth you need. Both tiers return the same clean JSON schema. Volume packages reduce cost per check significantly.
             </p>
           </div>
 
@@ -763,9 +763,10 @@ Authorization: Bearer <jwt>
               </div>
               <div className="mb-6">
                 <span className="text-3xl font-bold text-[#0F1F4B]" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  From $X
+                  From $2.50
                 </span>
                 <span className="text-sm text-gray-400"> / check</span>
+                <p className="text-xs text-[#0D9488] font-medium mt-1">Down to $1.50/check on volume</p>
               </div>
               <ul className="space-y-3 mb-8">
                 {[
@@ -805,9 +806,10 @@ Authorization: Bearer <jwt>
               </div>
               <div className="mb-6">
                 <span className="text-3xl font-bold text-white" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>
-                  From $X
+                  From $6.50
                 </span>
                 <span className="text-sm text-white/40"> / check</span>
+                <p className="text-xs text-[#2DD4BF] font-medium mt-1">Down to $4.00/check on volume</p>
               </div>
               <ul className="space-y-3 mb-8">
                 {[
@@ -830,9 +832,39 @@ Authorization: Bearer <jwt>
             </div>
           </div>
 
-          <p className="text-center text-sm text-gray-400 mt-6">
-            Volume pricing available. <Link href="/contact" className="text-[#0D9488] hover:underline">Contact us</Link> for enterprise plans.
-          </p>
+          {/* Volume pricing table */}
+          <div className="mt-10 max-w-3xl mx-auto fade-up stagger-2">
+            <h3 className="text-center text-base font-semibold text-[#0F1F4B] mb-4" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Volume pricing</h3>
+            <div className="overflow-x-auto">
+              <table className="w-full bg-white rounded-xl border border-gray-100 shadow-sm overflow-hidden text-sm">
+                <thead>
+                  <tr style={{ background: "#0F1F4B" }}>
+                    <th className="text-left px-5 py-3 text-xs font-bold text-white/60 uppercase tracking-wide">Monthly volume</th>
+                    <th className="text-center px-5 py-3 text-xs font-bold text-white/60 uppercase tracking-wide">Quick Check</th>
+                    <th className="text-center px-5 py-3 text-xs font-bold text-[#2DD4BF] uppercase tracking-wide">Full Risk Score</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {[
+                    ["Pay-as-you-go", "$2.50", "$6.50"],
+                    ["500 checks / mo", "$2.00", "$5.50"],
+                    ["2,000 checks / mo", "$1.75", "$4.75"],
+                    ["10,000+ checks / mo", "$1.50", "$4.00"],
+                    ["Enterprise / custom", "Contact us", "Contact us"],
+                  ].map(([vol, quick, full], i) => (
+                    <tr key={vol} className={i % 2 === 0 ? "bg-white" : "bg-gray-50/50"}>
+                      <td className="px-5 py-3 font-medium text-gray-800">{vol}</td>
+                      <td className="px-5 py-3 text-center text-gray-600">{quick}</td>
+                      <td className="px-5 py-3 text-center font-semibold text-[#0D9488]">{full}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            <p className="text-center text-sm text-gray-400 mt-4">
+              All prices per check. <Link href="/contact" className="text-[#0D9488] hover:underline">Contact us</Link> for annual contracts and enterprise plans.
+            </p>
+          </div>
         </div>
       </Section>
 
