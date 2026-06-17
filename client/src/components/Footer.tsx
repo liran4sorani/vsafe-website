@@ -2,9 +2,19 @@
  * Dark navy background, teal accents
  */
 import { Link } from "wouter";
-import { Shield, ExternalLink } from "lucide-react";
 
-const LOGO_DARK = "/manus-storage/vsafe-logo-dark_e44422cd.png";
+function FooterLogo() {
+  return (
+    <svg viewBox="0 0 220 52" fill="none" xmlns="http://www.w3.org/2000/svg" className="h-10 w-auto mb-4" aria-label="V-Safe">
+      <path d="M26 4 L46 10 L46 28 C46 38 36 46 26 49 C16 46 6 38 6 28 L6 10 Z" fill="#2DD4BF" />
+      <path d="M14 14 L26 36 L38 14" stroke="white" strokeWidth="5" strokeLinecap="round" strokeLinejoin="round" fill="none" />
+      <path d="M13 43 Q26 38 39 43" stroke="#22C55E" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M22 45.5 Q26 43 30 45.5" stroke="#F59E0B" strokeWidth="2.5" strokeLinecap="round" fill="none" />
+      <path d="M30 45.5 Q34 43 39 43" stroke="#EF4444" strokeWidth="2" strokeLinecap="round" fill="none" />
+      <text x="56" y="34" fontFamily="'Space Grotesk', 'Inter', system-ui, sans-serif" fontWeight="700" fontSize="22" fill="white" letterSpacing="-0.5">V-Safe</text>
+    </svg>
+  );
+}
 
 export default function Footer() {
   return (
@@ -13,7 +23,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-10 mb-12">
           {/* Brand */}
           <div className="md:col-span-1">
-            <img src={LOGO_DARK} alt="V-Safe" className="h-9 w-auto mb-4" />
+            <FooterLogo />
             <p className="text-sm text-white/60 leading-relaxed max-w-xs">
               The risk-intelligence API built for Israeli companies. Evidence-backed. Agent-native. Israeli-hosted.
             </p>
@@ -80,6 +90,12 @@ export default function Footer() {
                   </Link>
                 </li>
               ))}
+              <li>
+                <a href="mailto:sales@socalytix.io" className="text-sm text-[#2DD4BF] hover:text-white transition-colors font-medium">
+                  sales@socalytix.io
+                </a>
+              </li>
+
             </ul>
           </div>
         </div>

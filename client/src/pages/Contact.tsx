@@ -9,6 +9,10 @@ export default function Contact() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // Build mailto link with form data
+    const subject = encodeURIComponent(`V-Safe Inquiry: ${form.type === 'demo' ? 'Book a Demo' : form.type === 'api' ? 'Get API Key' : form.type === 'enterprise' ? 'Enterprise Pricing' : form.type === 'technical' ? 'Technical Question' : 'General Inquiry'}`);
+    const body = encodeURIComponent(`Name: ${form.name}\nCompany: ${form.company}\nEmail: ${form.email}\n\nMessage:\n${form.message}`);
+    window.location.href = `mailto:sales@socalytix.io?subject=${subject}&body=${body}`;
     setSubmitted(true);
   };
 
@@ -45,6 +49,7 @@ export default function Contact() {
                   <div>
                     <h3 className="font-semibold text-[#0F1F4B] mb-1" style={{ fontFamily: "'Space Grotesk', sans-serif" }}>Get in touch</h3>
                     <p className="text-sm text-gray-600">Questions about pricing, enterprise plans, or technical integration? Send us a message.</p>
+                    <a href="mailto:sales@socalytix.io" className="inline-block mt-2 text-sm font-semibold text-[#0D9488] hover:underline">sales@socalytix.io</a>
                   </div>
                 </div>
               </div>
